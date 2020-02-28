@@ -1,0 +1,183 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=2"><meta name="theme-color" content="#222"><meta name="generator" content="Hexo 4.0.0"><link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png"><link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png"><link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png"><link rel="mask-icon" href="/images/logo.svg" color="#222"><link rel="alternate" href="/./atom.xml" title="做一个幸福的人" type="application/atom+xml"><meta name="google-site-verification" content="Qr_3yqLtyErDFKHW7mE8PJz4qDUX-bf_fMLpSRckQe4"><meta name="baidu-site-verification" content="zOwIvKMV7f"><link rel="stylesheet" href="/css/main.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Roboto:300,300italic,400,400italic,700,700italic&display=swap&subset=latin,latin-ext"><link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css"><link rel="stylesheet" href="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.css"><link rel="stylesheet" href="/lib/pace/pace-theme-center-atom.min.css"><script src="/lib/pace/pace.min.js"></script><script id="hexo-configurations">var NexT=window.NexT||{},CONFIG={root:"/",scheme:"Gemini",version:"7.5.0",exturl:!1,sidebar:{position:"left",display:"post",offset:12,onmobile:!1},copycode:{enable:!0,show_result:!0,style:null},back2top:{enable:!0,sidebar:!0,scrollpercent:!0},bookmark:{enable:!1,color:"#222",save:"auto"},fancybox:!0,mediumzoom:!1,lazyload:!1,pangu:!1,algolia:{appID:"",apiKey:"",indexName:"",hits:{per_page:10},labels:{input_placeholder:"搜索文章",hits_empty:"我们没有找到任何搜索结果: ${query}",hits_stats:"找到约${hits}条结果（用时${time}ms）"}},localsearch:{enable:!0,trigger:"auto",top_n_per_article:1,unescape:!1,preload:!1},path:"search.xml",motion:{enable:!0,async:!1,transition:{post_block:"fadeIn",post_header:"slideDownIn",post_body:"slideDownIn",coll_header:"slideLeftIn",sidebar:"slideUpIn"}},translation:{copy_button:"复制",copy_success:"复制成功",copy_failure:"复制失败"},sidebarPadding:40}</script><link href="https://fonts.googleapis.com/css?family=Noto+Serif+SC|Roboto&display=swap" rel="stylesheet"><meta name="description" content="参考：《矩阵分析与应用》第3章 3.1 Jacobian矩阵与梯度矩阵在pytorch的autograd包中，利用Jacobian（雅格比）矩阵进行梯度的计算"><meta name="keywords" content="微积分,线性代数"><meta property="og:type" content="article"><meta property="og:title" content="Jacobian矩阵和梯度矩阵"><meta property="og:url" content="https:&#x2F;&#x2F;www.zhujian.tech&#x2F;posts&#x2F;29422005.html"><meta property="og:site_name" content="做一个幸福的人"><meta property="og:description" content="参考：《矩阵分析与应用》第3章 3.1 Jacobian矩阵与梯度矩阵在pytorch的autograd包中，利用Jacobian（雅格比）矩阵进行梯度的计算"><meta property="og:locale" content="zh-CN"><meta property="og:updated_time" content="2020-02-15T05:36:35.867Z"><meta name="twitter:card" content="summary"><link rel="canonical" href="https://www.zhujian.tech/posts/29422005.html"><script id="page-configurations">CONFIG.page={sidebar:"",isHome:!1,isPost:!0,isPage:!1,isArchive:!1}</script><title>Jacobian矩阵和梯度矩阵 | 做一个幸福的人</title><script>var _hmt=_hmt||[];!function(){var e=document.createElement("script");e.src="https://hm.baidu.com/hm.js?e677aac1ac69b8826b9cfecb4e72e107";var t=document.getElementsByTagName("script")[0];t.parentNode.insertBefore(e,t)}()</script><noscript><style>.sidebar-inner,.use-motion .brand,.use-motion .collection-header,.use-motion .comments,.use-motion .menu-item,.use-motion .pagination,.use-motion .post-block,.use-motion .post-body,.use-motion .post-header{opacity:initial}.use-motion .site-subtitle,.use-motion .site-title{opacity:initial;top:initial}.use-motion .logo-line-before i{left:initial}.use-motion .logo-line-after i{right:initial}</style></noscript></head><body itemscope itemtype="http://schema.org/WebPage"><div class="container use-motion"><div class="headband"></div><header class="header" itemscope itemtype="http://schema.org/WPHeader"><div class="header-inner"><div class="site-brand-container"><div class="site-meta"><div><a href="/" class="brand" rel="start"><span class="logo-line-before"><i></i></span> <span class="site-title">做一个幸福的人</span><span class="logo-line-after"><i></i></span></a></div><p class="site-subtitle">面朝大海，春暖花开</p></div><div class="site-nav-toggle"><div class="toggle" aria-label="切换导航栏"><span class="toggle-line toggle-line-first"></span><span class="toggle-line toggle-line-middle"></span><span class="toggle-line toggle-line-last"></span></div></div></div><nav class="site-nav"><ul id="menu" class="menu"><li class="menu-item menu-item-home"><a href="/" rel="section"><i class="fa fa-fw fa-home"></i> 首页</a></li><li class="menu-item menu-item-about"><a href="/about/" rel="section"><i class="fa fa-fw fa-user"></i> 关于</a></li><li class="menu-item menu-item-tags"><a href="/tags/" rel="section"><i class="fa fa-fw fa-tags"></i> 标签<span class="badge">129</span></a></li><li class="menu-item menu-item-categories"><a href="/categories/" rel="section"><i class="fa fa-fw fa-th"></i> 分类<span class="badge">48</span></a></li><li class="menu-item menu-item-archives"><a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i> 归档<span class="badge">169</span></a></li><li class="menu-item menu-item-search"><a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i> 搜索</a></li></ul></nav><div class="site-search"><div class="popup search-popup"><div class="search-header"><span class="search-icon"><i class="fa fa-search"></i></span><div class="search-input-container"> <input autocomplete="off" autocorrect="off" autocapitalize="none" placeholder="搜索..." spellcheck="false" type="text" id="search-input"></div><span class="popup-btn-close"><i class="fa fa-times-circle"></i></span></div><div id="search-result"></div></div><div class="search-pop-overlay"></div></div></div></header> <a href="https://github.com/zjZSTU" class="github-corner" title="Follow me on GitHub" aria-label="Follow me on GitHub" rel="noopener" target="_blank"><svg width="80" height="80" viewBox="0 0 250 250" aria-hidden="true"><path d="M0 0 115 115 130 115 142 142 250 250 250 0Z"></path><path d="M128.3 109C113.8 99.7 119 89.6 119 89.6 122 82.7 120.5 78.6 120.5 78.6 119.2 72 123.4 76.3 123.4 76.3 127.3 80.9 125.5 87.3 125.5 87.3 122.9 97.6 130.6 101.9 134.4 103.2" fill="currentColor" style="transform-origin:130px 106px" class="octo-arm"></path><path d="M115 115C114.9 115.1 118.7 116.5 119.8 115.4L133.7 101.6C136.9 99.2 139.9 98.4 142.2 98.6 133.8 88 127.5 74.4 143.8 58 148.5 53.4 154 51.2 159.7 51 160.3 49.4 163.2 43.6 171.4 40.1 171.4 40.1 176.1 42.5 178.8 56.2 183.1 58.6 187.2 61.8 190.9 65.4 194.5 69 197.7 73.2 200.1 77.6 213.8 80.2 216.3 84.9 216.3 84.9 212.7 93.1 206.9 96 205.4 96.6 205.1 102.4 203 107.8 198.3 112.5 181.9 128.9 168.3 122.5 157.7 114.1 157.9 116.9 156.7 120.9 152.7 124.9L141 136.5C139.8 137.7 141.6 141.9 141.8 141.8Z" fill="currentColor" class="octo-body"></path></svg></a><main class="main"><div class="main-inner"><div class="content-wrap"><div class="content"><div class="posts-expand"><article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN"><link itemprop="mainEntityOfPage" href="https://www.zhujian.tech/posts/29422005.html"><span hidden itemprop="author" itemscope itemtype="http://schema.org/Person"><meta itemprop="image" content="/images/avatar.png"><meta itemprop="name" content="zhujian"><meta itemprop="description" content="one bite at a time"></span><span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization"><meta itemprop="name" content="做一个幸福的人"></span><header class="post-header"><h1 class="post-title" itemprop="name headline"> Jacobian矩阵和梯度矩阵</h1><div class="post-meta"><span class="post-meta-item"><span class="post-meta-item-icon"><i class="fa fa-calendar-o"></i></span> <span class="post-meta-item-text">发表于</span> <time title="创建时间：2019-05-13 11:01:53" itemprop="dateCreated datePublished" datetime="2019-05-13T11:01:53+00:00">2019-05-13</time></span><span class="post-meta-item"><span class="post-meta-item-icon"><i class="fa fa-calendar-check-o"></i></span> <span class="post-meta-item-text">更新于</span> <time title="修改时间：2020-02-15 05:36:35" itemprop="dateModified" datetime="2020-02-15T05:36:35+00:00">2020-02-15</time></span><span class="post-meta-item"><span class="post-meta-item-icon"><i class="fa fa-folder-o"></i></span> <span class="post-meta-item-text">分类于</span> <span itemprop="about" itemscope itemtype="http://schema.org/Thing"><a href="/categories/math/" itemprop="url" rel="index"><span itemprop="name">数学</span></a></span></span><span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display:none"><span class="post-meta-item-icon"><i class="fa fa-eye"></i></span> <span class="post-meta-item-text">阅读次数：</span><span id="busuanzi_value_page_pv"></span></span><br><span class="post-meta-item" title="本文字数"><span class="post-meta-item-icon"><i class="fa fa-file-word-o"></i></span> <span class="post-meta-item-text">本文字数：</span> <span>8.1k</span></span><span class="post-meta-item" title="阅读时长"><span class="post-meta-item-icon"><i class="fa fa-clock-o"></i></span> <span class="post-meta-item-text">阅读时长 &asymp;</span> <span>14 分钟</span></span></div></header><div class="post-body" itemprop="articleBody"><p>参考：《矩阵分析与应用》第3章 3.1 Jacobian矩阵与梯度矩阵</p><p>在<code>pytorch</code>的<code>autograd</code>包中，利用<code>Jacobian</code>（雅格比）矩阵进行梯度的计算</p><a id="more"></a><p>学习实值标量函数、实值向量函数和实值矩阵函数相对于实向量变元或矩阵变元的偏导</p><h2 id="计算符号"><a href="#计算符号" class="headerlink" title="计算符号"></a>计算符号</h2><ul><li>实向量变元：$x=[x_{1},…,x_{m}]^T\in R^{m}$</li><li>实矩阵变元：$X=[x_{1},…,x_{n}]\in R^{m\times n}$</li><li>实值标量函数<ul><li>$f(X)\in R$，其变元是$m\times 1$实值向量$x$，记作$f:R^{m}\rightarrow R$</li><li>$f(X)\in R$，其变元是$m\times n$实矩阵$X$，记作$f:R^{m\times n}\rightarrow R$</li></ul></li><li>$p$维实列向量函数<ul><li>$f(x)\in R^{p}$，其变元是$m\times 1$实值向量$x$，记作$f:R^{m}\rightarrow R^{p}$</li><li>$f(X)\in R^{p}$，其变元是$m\times n$实矩阵$X$，记作$f:R^{m}\rightarrow R^{p}$</li></ul></li><li>$p\times q$维实矩阵函数<ul><li>$f(x)\in R^{p\times q}$，其变元是$m\times 1$实值向量$x$，记作$f:R^{m}\rightarrow R^{p\times q}$</li><li>$f(X)\in R^{p\times q}$，其变元是$m\times n$实矩阵$X$，记作$f:R^{m}\rightarrow R^{p\times q}$</li></ul></li></ul><p>实值函数的分类</p><div class="table-container"><table><thead><tr><th style="text-align:center">函数类型</th><th style="text-align:center">向量变元$x\in R^{m}$</th><th>矩阵变元$X\in R^{m\times n}$</th></tr></thead><tbody><tr><td style="text-align:center">标量函数$f\in R$</td><td style="text-align:center">$f(x), \ f: R^{m}\rightarrow R$</td><td>$f(X), \ f: R^{m\times n}\rightarrow R$</td></tr><tr><td style="text-align:center">向量函数$f\in R^{p}$</td><td style="text-align:center">$f(x), \ f: R^{m}\rightarrow R^{p}$</td><td>$f(X), \ f: R^{m\times n}\rightarrow R^{p}$</td></tr><tr><td style="text-align:center">矩阵函数$F\in R^{p\times q}$</td><td style="text-align:center">$F(x), \ f: R^{m}\rightarrow R^{p\times q}$</td><td>$F(X), \ F: R^{m\times n}\rightarrow R^{p\times q}$</td></tr></tbody></table></div><h2 id="行向量偏导算子和Jacobian矩阵"><a href="#行向量偏导算子和Jacobian矩阵" class="headerlink" title="行向量偏导算子和Jacobian矩阵"></a>行向量偏导算子和Jacobian矩阵</h2><h3 id="实值标量函数"><a href="#实值标量函数" class="headerlink" title="实值标量函数"></a>实值标量函数</h3><p>定义实向量变元$x=[x_{1},…,x_{m}]^T$，$1\times m$行向量偏导算子记为</p><script type="math/tex;mode=display">
+D_{x}=\frac {\partial }{\partial x^T}
+=[\frac {\partial }{\partial x_{1}},...,\frac {\partial }{\partial x_{m}}]</script><p>对于实值标量函数$f(x)$而言，对于$x$的偏导向量是一个$1\times m$行向量</p><script type="math/tex;mode=display">
+D_{x}f(x)=\frac {\partial f(x)}{\partial x^T}
+=[\frac {\partial f(x)}{\partial x_{1}},...,\frac {\partial f(x)}{\partial x_{m}}]</script><p>当变元为实值矩阵$X\in R^{m\times n}$时，其偏导向量有两种表示形式</p><script type="math/tex;mode=display">
+D_{X}f(X)=\frac {\partial f(X)}{\partial X^T}=
+\begin{bmatrix}
+\frac {\partial f(X)}{\partial x_{11}} & \dots & \frac {\partial f(X)}{\partial x_{m1}}\\ 
+\vdots & \vdots & \vdots\\ 
+\frac {\partial f(X)}{\partial x_{1n}} & \vdots & \frac {\partial f(X)}{\partial x_{mn}}
+\end{bmatrix}
+\in R^{n\times m}</script><p>或者</p><script type="math/tex;mode=display">
+D_{vecX}f(X)=[\frac {\partial f(X)}{\partial x_{11}},...,\frac {\partial f(X)}{\partial x_{m1}},...,\frac {\partial f(X)}{\partial x_{1n}},...,\frac {\partial f(X)}{\partial x_{mn}}]</script><p>$D_{X}f(X)$称为实值标量函数$f(X)$关于矩阵变元$X$的$Jacobian$矩阵</p><p>$D_{vecX}f(X)$称为实值标量函数$f(X)$关于矩阵变元$X$的<strong>行偏导向量</strong></p><p>两者之间关系</p><script type="math/tex;mode=display">
+D_{vecX}f(X)=rvec(D_{X}f(X))=(vec(D_{X}^{T}f(X)))^T</script><p>即实值标量函数$f(X)$的行向量偏导$D_{vecX}f(X)$等于$Jacobian$矩阵的转置$D_{X}^{T}f(X)$的列向量化$vec(D_{X}^{T}f(X)$的转置</p><h3 id="实值矩阵函数"><a href="#实值矩阵函数" class="headerlink" title="实值矩阵函数"></a>实值矩阵函数</h3><p>计算实值矩阵函数$F(X)=[f_{kl}]_{k=1,l=1}^{p,q}\in R^{p\times q}$对于矩阵变元$X\in R^{m\times n}$的行偏导矩阵:</p><p>先通过列向量化，将$p\times q$矩阵函数$F(X)$转换成$pq\times 1$列向量</p><script type="math/tex;mode=display">
+vec(F(X))=
+[f_{11}(X),...,f_{p1}(X),...,f_{1q}(X),...,f_{pq}(X)]^T\in R^{pq}</script><p>然后，将该列向量对变元$X$的列向量化的转置$(vecX)^T$求偏导，给出$pq\times mn$维$Jacobian$矩阵</p><script type="math/tex;mode=display">
+D_{X}F(X)=\frac {\partial vec(F(X))}{\partial (vecX)^T}\in R^{pq\times mn}</script><p>具体表达式如下：</p><script type="math/tex;mode=display">
+D_{X}F(X)=
+\begin{bmatrix}
+\frac {\partial f_{11}}{\partial (vecX)^T}\\ 
+\vdots\\ 
+\frac {\partial f_{p1}}{\partial (vecX)^T}\\ 
+\vdots\\ 
+\frac {\partial f_{1q}}{\partial (vecX)^T}\\ 
+\vdots\\ 
+\frac {\partial f_{pq}}{\partial (vecX)^T}
+\end{bmatrix}=
+\begin{bmatrix}
+\frac {\partial f_{11}}{\partial x_{11}} & \dots && \frac {\partial f_{11}}{\partial x_{m1}} & \dots & \frac {\partial f_{11}}{\partial x_{1n}} & \dots & \frac {\partial f_{11}}{\partial x_{mn}}\\ 
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\ 
+\frac {\partial f_{p1}}{\partial x_{11}} & \dots && \frac {\partial f_{p1}}{\partial x_{m1}} & \dots & \frac {\partial f_{p1}}{\partial x_{1n}} & \dots & \frac {\partial f_{p1}}{\partial x_{mn}}\\ 
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+\frac {\partial f_{1q}}{\partial x_{11}} & \dots && \frac {\partial f_{1q}}{\partial x_{m1}} & \dots & \frac {\partial f_{1q}}{\partial x_{1n}} & \dots & \frac {\partial f_{1q}}{\partial x_{mn}}\\  
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+\frac {\partial f_{pq}}{\partial x_{11}} & \dots && \frac {\partial f_{pq}}{\partial x_{m1}} & \dots & \frac {\partial f_{pq}}{\partial x_{1n}} & \dots & \frac {\partial f_{pq}}{\partial x_{mn}}\\ 
+\end{bmatrix}</script><h2 id="列向量偏导算子和梯度矩阵"><a href="#列向量偏导算子和梯度矩阵" class="headerlink" title="列向量偏导算子和梯度矩阵"></a>列向量偏导算子和梯度矩阵</h2><p><strong>采用列向量形式定义的偏导算子称为列向量偏导算子，又称为梯度算子</strong></p><h3 id="实值标量函数-1"><a href="#实值标量函数-1" class="headerlink" title="实值标量函数"></a>实值标量函数</h3><p>定义实向量变元$x=[x_{1},…,x_{m}]^T$，$1\times m$行向量偏导算子记为</p><script type="math/tex;mode=display">
+\bigtriangledown_{x}=\frac {\partial }{\partial x^T}
+=[\frac {\partial }{\partial x_{1}},...,\frac {\partial }{\partial x_{m}}]^T</script><p>对于实值标量函数$f(x)$而言，对于$x$的偏导向量$\bigtriangledown_{x}f(x)$是一个$m\times 1$列向量</p><script type="math/tex;mode=display">
+D_{x}f(x)=\frac {\partial f(x)}{\partial x}
+=[\frac {\partial f(x)}{\partial x_{1}},...,\frac {\partial f(x)}{\partial x_{m}}]^T</script><p>将实值矩阵变元$X\in R^{m\times n}$列向量化后，关于矩阵变元$X$的梯度向量为</p><script type="math/tex;mode=display">
+\bigtriangledown_{vecX}f(X)=\frac {\partial f(X)}{\partial vecX}
+=[\frac {\partial f(X)}{\partial x_{11}},...,\frac {\partial f(X)}{\partial x_{m1}},...,\frac {\partial f(X)}{\partial x_{1n}},...,\frac {\partial f(X)}{\partial x_{mn}}]^T</script><p>或者</p><script type="math/tex;mode=display">
+\bigtriangledown_{X}f(X)=\frac {\partial f(X)}{\partial X}=
+\begin{bmatrix}
+\frac {\partial f(X)}{\partial x_{11}} & \dots & \frac {\partial f(X)}{\partial x_{1n}}\\ 
+\vdots & \vdots & \vdots\\ 
+\frac {\partial f(X)}{\partial x_{m1}} & \vdots & \frac {\partial f(X)}{\partial x_{mn}}
+\end{bmatrix}</script><p>前者称为实值标量函数$f(X)$关于实值矩阵变元$X$的列向量偏导算子</p><p>后者称为实值标量函数$f(X)$关于实值矩阵变元$X$的梯度矩阵</p><p><strong>所以实值标量函数$f(X)$的梯度矩阵等于$Jacobian$矩阵的转置</strong></p><script type="math/tex;mode=display">
+\bigtriangledown_{X}f(X)=D_{X}^T f(X)</script><h3 id="实值矩阵函数-1"><a href="#实值矩阵函数-1" class="headerlink" title="实值矩阵函数"></a>实值矩阵函数</h3><p>计算实值矩阵函数$F(X)\in R^{p\times q}$对于矩阵变元$X\in R^{m\times n}$的梯度矩阵</p><p>先通过列向量化，将$p\times q$矩阵函数$F(X)$转换成$pq\times 1$列向量</p><script type="math/tex;mode=display">
+vec(F(X))=
+[f_{11}(X),...,f_{p1}(X),...,f_{1q}(X),...,f_{pq}(X)]^T\in R^{pq}</script><p>然后，将该列向量对变元$X$的列向量化$vecX$求偏导，给出$pq\times mn$维梯度矩阵</p><p>具体表达式如下：</p><script type="math/tex;mode=display">
+\bigtriangledown_{X}F(X)=
+\begin{bmatrix}
+\frac {\partial f_{11}}{\partial vecX}\\ 
+\vdots\\ 
+\frac {\partial f_{p1}}{\partial vecX}\\ 
+\vdots\\ 
+\frac {\partial f_{1q}}{\partial vecX}\\ 
+\vdots\\ 
+\frac {\partial f_{pq}}{\partial vecX}
+\end{bmatrix}=
+\begin{bmatrix}
+\frac {\partial f_{11}}{\partial x_{11}} & \dots && \frac {\partial f_{11}}{\partial x_{11}} & \dots & \frac {\partial f_{11}}{\partial x_{11}} & \dots & \frac {\partial f_{11}}{\partial x_{11}}\\ 
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\ 
+\frac {\partial f_{p1}}{\partial x_{m1}} & \dots && \frac {\partial f_{p1}}{\partial x_{m1}} & \dots & \frac {\partial f_{p1}}{\partial x_{m1}} & \dots & \frac {\partial f_{p1}}{\partial x_{m1}}\\ 
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+\frac {\partial f_{1q}}{\partial x_{1n}} & \dots && \frac {\partial f_{1q}}{\partial x_{1n}} & \dots & \frac {\partial f_{1q}}{\partial x_{1n}} & \dots & \frac {\partial f_{1q}}{\partial x_{1n}}\\  
+\vdots & \vdots & \vdots & \vdots & \vdots & \vdots & \vdots\\
+\frac {\partial f_{pq}}{\partial x_{mn}} & \dots && \frac {\partial f_{pq}}{\partial x_{mn}} & \dots & \frac {\partial f_{pq}}{\partial x_{mn}} & \dots & \frac {\partial f_{pq}}{\partial x_{mn}}\\ 
+\end{bmatrix}</script><p><strong>所以实值矩阵函数$f(X)$的梯度矩阵等于$Jacobian$矩阵的转置</strong></p><script type="math/tex;mode=display">
+\bigtriangledown_{X}F(X)=(D_{X} F(X))^T</script><h2 id="偏导和梯度计算"><a href="#偏导和梯度计算" class="headerlink" title="偏导和梯度计算"></a>偏导和梯度计算</h2><p>实值函数对于矩阵变元$X$的梯度计算有如下性质和法则</p><ol><li>若$f(X)=c$为常数，其中$X\in R^{m\times n}$，则梯度$\frac {\partial c}{\partial X}=O_{m\times n}$（<strong>维数相容原则</strong>）</li><li>线性法则。若$f(X)$和$g(X)$分别是矩阵$X$的实值函数，$c_{1}$和$c_{2}$为实常数，那么</li></ol><script type="math/tex;mode=display">
+\frac {\partial [c_{1}f(X)+c_{2}g(X)]}{\partial X}
+=c_{1}\frac {\partial f(X)}{\partial X}
++c_{2}\frac {\partial g(X)}{\partial X}</script><ol><li>乘积法则。若$f(X), g(X)$和$h(X)$都是矩阵$X$的实值函数，则</li></ol><script type="math/tex;mode=display">
+\frac {\partial [f(X)g(X)]}{\partial X}
+=g(X)\frac {\partial f(X)}{\partial X}
++f(X)\frac {\partial g(X)}{\partial X}</script><p>以及</p><script type="math/tex;mode=display">
+\frac {\partial [f(X)g(X)h(X)]}{\partial X}
+=g(X)h(X)\frac {\partial f(X)}{\partial X}
++f(X)h(X)\frac {\partial g(X)}{\partial X}
++f(X)g(X)\frac {\partial h(X)}{\partial X}</script><ol><li>商法则。若$g(X)\neq 0$，则</li></ol><script type="math/tex;mode=display">
+\frac {\partial [f(X)/g(X)]}{\partial X}
+=\frac {1}{g(X)^2}[g(X)\frac {\partial f(X)}{\partial X}-f(X)\frac {\partial g(X)}{\partial X}]</script><ol><li>链式法则。令$X$为$m\times n$矩阵，且$y=f(X)$和$g(y)$分别是以矩阵$X$和标量$y$为变元的实值函数，则</li></ol><script type="math/tex;mode=display">
+\frac {\partial g(f(X))}{\partial X}
+=\frac {dg(y)}{dy} \frac {\partial f(X)}{\partial X}</script><h3 id="实值标量函数-2"><a href="#实值标量函数-2" class="headerlink" title="实值标量函数"></a>实值标量函数</h3><p>针对实值标量函数有如下推论</p><ol><li>实值函数$f(x)=x^{T}Ax$的行偏导向量为$Df(x)=x^{T}(A+A^{T})$，梯度向量为$\bigtriangledown_{X}f(x)=(Df(X))^{T}=(A^{T}+A)x$</li><li>实值函数$f(x)=a^{T}XX^{T}b$，其中$X\in R^{m\times n},a,b\in R^{n\times 1}$，$Jacobian$矩阵为$D_{X}f(X)=X^{T}(ba^{T}+ab^{T})$，梯度矩阵为$\bigtriangledown_{X}f(x)=(ab^{T}+ba^{T})X$</li><li>实值函数$f(X)=tr(XB)$，其中$X\in R^{m\times n}, b\in R^{n\times m}, tr(BX)=tr(XB)$，所以$Jacobian$矩阵为$D_{X}tr(XB)=D_{X}tr(BX)=B$，梯度矩阵为$\bigtriangledown_{X}tr(XB)=\bigtriangledown_{X}tr(BX)=B^{T}$</li></ol><p>以推论一为例，假设</p><script type="math/tex;mode=display">
+x = \begin{bmatrix}
+x_{1}\\ 
+x_{2}
+\end{bmatrix} \ 
+A=\begin{bmatrix}
+a_{11} & a_{12}\\ 
+a_{21} & a_{22}
+\end{bmatrix}</script><p>所以</p><script type="math/tex;mode=display">
+f(x)=x^{T}Ax=
+\begin{bmatrix}
+x_{1} & x_{2}
+\end{bmatrix}
+\begin{bmatrix}
+a_{11} & a_{12}\\ 
+a_{21} & a_{22}
+\end{bmatrix}
+\begin{bmatrix}
+x_{1}\\ 
+x_{2}
+\end{bmatrix}
+=\sum_{k=1}^{2}\sum_{l=1}^{2}a_{kl}x_{k}x_{l}</script><script type="math/tex;mode=display">
+=[x_{1}a_{11}+x_{2}a_{21}, x_{1}a_{12}+x_{2}a_{22}]
+\begin{bmatrix}
+x_{1}\\ 
+x_{2}
+\end{bmatrix}
+=x_{1}a_{11}x_{1}+x_{2}a_{21}x_{1}+x_{1}a_{12}x_{2}+x_{2}a_{22}x_{2}</script><script type="math/tex;mode=display">
+Df(X)=\frac {\partial f(x)}{\partial x}=
+[x_{1}a_{11}+a_{11}x_{1}+x_{2}a_{21}+a_{12}x_{2}, a_{21}x_{1}+x_{1}a_{12}+x_{2}a_{22}+a_{22}x_{2}]=\\
+[x_{1}a_{11}+x_{2}a_{21}, x_{1}a_{12}+x_{2}a_{22}]
++[a_{11}x_{1}+a_{12}x_{2}, a_{21}x_{1}+a_{22}x_{2}]\\
+=[x_{1},x_{2}]\begin{bmatrix}
+a_{11} & a_{12}\\ 
+a_{21} & a_{22}
+\end{bmatrix}
++[x_{1},x_{2}]\begin{bmatrix}
+a_{11} & a_{21}\\ 
+a_{12} & a_{22}
+\end{bmatrix}
+=x^{T}A+x^{T}A^{T}
+=x^{T}(A+A^{T})</script></div><div class="reward-container"><div>坚持原创技术分享，您的支持将鼓励我继续创作！</div> <button disable="enable" onclick="var qr = document.getElementById(&quot;qr&quot;); qr.style.display = (qr.style.display === 'none') ? 'block' : 'none';"> 打赏</button><div id="qr" style="display:none"><div style="display:inline-block"> <img src="/images/wechatpay.jpg" alt="zhujian 微信支付"><p>微信支付</p></div><div style="display:inline-block"> <img src="/images/alipay.jpg" alt="zhujian 支付宝"><p>支付宝</p></div></div></div><div><ul class="post-copyright"><li class="post-copyright-author"> <strong>本文作者：</strong> zhujian</li><li class="post-copyright-link"> <strong>本文链接：</strong> <a href="https://www.zhujian.tech/posts/29422005.html" title="Jacobian矩阵和梯度矩阵">https://www.zhujian.tech/posts/29422005.html</a></li><li class="post-copyright-license"> <strong>版权声明：</strong> 本博客所有文章除特别声明外，均采用<a href="https://creativecommons.org/licenses/by-nc-sa/4.0/null" rel="noopener" target="_blank"><i class="fa fa-fw fa-creative-commons"></i> BY-NC-SA</a> 许可协议。转载请注明出处！</li></ul></div><footer class="post-footer"><div class="post-tags"> <a href="/tags/calculus/" rel="tag"># 微积分</a> <a href="/tags/linear-albegra/" rel="tag"># 线性代数</a></div><div class="post-nav"><div class="post-nav-next post-nav-item"><a href="/posts/d1deacd1.html" rel="next" title="矩阵基础"><i class="fa fa-chevron-left"></i> 矩阵基础</a></div><span class="post-nav-divider"></span><div class="post-nav-prev post-nav-item"> <a href="/posts/b9ab243b.html" rel="prev" title="实值标量函数一阶微分和Jacobian矩阵辨识">实值标量函数一阶微分和Jacobian矩阵辨识<i class="fa fa-chevron-right"></i></a></div></div></footer></article></div></div><div class="comments" id="gitalk-container"></div></div><div class="toggle sidebar-toggle"><span class="toggle-line toggle-line-first"></span><span class="toggle-line toggle-line-middle"></span><span class="toggle-line toggle-line-last"></span></div><aside class="sidebar"><div class="sidebar-inner"><ul class="sidebar-nav motion-element"><li class="sidebar-nav-toc"> 文章目录</li><li class="sidebar-nav-overview"> 站点概览</li></ul><div class="post-toc-wrap sidebar-panel"><div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#计算符号"><span class="nav-number">1.</span> <span class="nav-text">计算符号</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#行向量偏导算子和Jacobian矩阵"><span class="nav-number">2.</span> <span class="nav-text">行向量偏导算子和Jacobian矩阵</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实值标量函数"><span class="nav-number">2.1.</span> <span class="nav-text">实值标量函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实值矩阵函数"><span class="nav-number">2.2.</span> <span class="nav-text">实值矩阵函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#列向量偏导算子和梯度矩阵"><span class="nav-number">3.</span> <span class="nav-text">列向量偏导算子和梯度矩阵</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实值标量函数-1"><span class="nav-number">3.1.</span> <span class="nav-text">实值标量函数</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#实值矩阵函数-1"><span class="nav-number">3.2.</span> <span class="nav-text">实值矩阵函数</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#偏导和梯度计算"><span class="nav-number">4.</span> <span class="nav-text">偏导和梯度计算</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#实值标量函数-2"><span class="nav-number">4.1.</span> <span class="nav-text">实值标量函数</span></a></li></ol></li></ol></div></div><div class="site-overview-wrap sidebar-panel"><div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person"> <img class="site-author-image" itemprop="image" alt="zhujian" src="/images/avatar.png"><p class="site-author-name" itemprop="name">zhujian</p><div class="site-description" itemprop="description">one bite at a time</div></div><div class="site-state-wrap motion-element"><nav class="site-state"><div class="site-state-item site-state-posts"> <a href="/archives/"><span class="site-state-item-count">169</span> <span class="site-state-item-name">日志</span></a></div><div class="site-state-item site-state-categories"> <a href="/categories/"><span class="site-state-item-count">48</span> <span class="site-state-item-name">分类</span></a></div><div class="site-state-item site-state-tags"> <a href="/tags/"><span class="site-state-item-count">129</span> <span class="site-state-item-name">标签</span></a></div></nav></div><div class="feed-link motion-element"><a href="/./atom.xml" rel="alternate"><i class="fa fa-rss"></i> RSS</a></div><div class="links-of-author motion-element"><span class="links-of-author-item"><a href="https://github.com/zjZSTU" title="Github &amp;rarr; https:&#x2F;&#x2F;github.com&#x2F;zjZSTU" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i> Github</a></span><span class="links-of-author-item"><a href="https://blog.csdn.net/u012005313" title="CSDN &amp;rarr; https:&#x2F;&#x2F;blog.csdn.net&#x2F;u012005313" rel="noopener" target="_blank"><i class="fa fa-fw fa-book"></i> CSDN</a></span><span class="links-of-author-item"><a href="/mailto:zjzstu@gmail.com" title="Gmail &amp;rarr; mailto:zjzstu@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i> Gmail</a></span><span class="links-of-author-item"><a href="/mailto:505169307@gmail.com" title="QQmail &amp;rarr; mailto:505169307@gmail.com" rel="noopener" target="_blank"><i class="fa fa-fw fa-envelope"></i> QQmail</a></span></div><div class="cc-license motion-element" itemprop="license"> <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/null" class="cc-opacity" rel="noopener" target="_blank"><img src="/images/cc-by-nc-sa.svg" alt="Creative Commons"></a></div><div class="links-of-blogroll motion-element"><div class="links-of-blogroll-title"><i class="fa fa-fw fa-link"></i> Links</div><ul class="links-of-blogroll-list"><li class="links-of-blogroll-item"> <a href="https://cloud.tencent.com/" title="https:&#x2F;&#x2F;cloud.tencent.com" rel="noopener" target="_blank">腾讯云</a></li><li class="links-of-blogroll-item"> <a href="https://www.aliyun.com/" title="https:&#x2F;&#x2F;www.aliyun.com" rel="noopener" target="_blank">阿里云</a></li><li class="links-of-blogroll-item"> <a href="https://developer.android.com/" title="https:&#x2F;&#x2F;developer.android.com&#x2F;" rel="noopener" target="_blank">Android Dev</a></li><li class="links-of-blogroll-item"> <a href="https://jenkins.io/" title="https:&#x2F;&#x2F;jenkins.io&#x2F;" rel="noopener" target="_blank">Jenkins</a></li><li class="links-of-blogroll-item"> <a href="http://cs231n.github.io/" title="http:&#x2F;&#x2F;cs231n.github.io&#x2F;" rel="noopener" target="_blank">cs231n</a></li><li class="links-of-blogroll-item"> <a href="https://pytorch.org/docs/stable/index.html" title="https:&#x2F;&#x2F;pytorch.org&#x2F;docs&#x2F;stable&#x2F;index.html" rel="noopener" target="_blank">pytorch</a></li><li class="links-of-blogroll-item"> <a href="https://docs.docker.com/install/linux/docker-ce/ubuntu/" title="https:&#x2F;&#x2F;docs.docker.com&#x2F;install&#x2F;linux&#x2F;docker-ce&#x2F;ubuntu&#x2F;" rel="noopener" target="_blank">docker</a></li></ul></div></div><div class="back-to-top motion-element"><i class="fa fa-arrow-up"></i> <span>0%</span></div></div></aside><div id="sidebar-dimmer"></div></div></main><footer class="footer"><div class="footer-inner"><div class="copyright"> &copy; <span itemprop="copyrightYear">2020</span><span class="with-love"><i class="fa fa-user"></i></span> <span class="author" itemprop="copyrightHolder">zhujian</span> <span class="post-meta-divider">|</span><span class="post-meta-item-icon"><i class="fa fa-area-chart"></i></span> <span class="post-meta-item-text">站点总字数：</span> <span title="站点总字数">948k</span> <span class="post-meta-divider">|</span><span class="post-meta-item-icon"><i class="fa fa-coffee"></i></span> <span class="post-meta-item-text">站点阅读时长 &asymp;</span> <span title="站点阅读时长">26:20</span> <span class="post-meta-divider">|</span><span class="post-meta-item-icon"><i class="fa fa-bar-chart-o"></i></span> <a href="https://tongji.baidu.com/web/27249108/overview/index?siteId=13647183" rel="noopener" target="_blank">百度统计</a></div><div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.0.0</div> <span class="post-meta-divider">|</span><div class="theme-info">主题 – <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> v7.5.0</div><div class="beian"> <a href="http://www.beian.miit.gov.cn/" rel="noopener" target="_blank">浙ICP备 19026415号</a> <span class="post-meta-divider">|</span> <img src="/images/beian_icon.png" style="display:inline-block;text-decoration:none;height:13px"> <a href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=33011802001748" rel="noopener" target="_blank">浙公网安备 33011802001748号</a></div><div class="busuanzi-count"><script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script><span class="post-meta-item" id="busuanzi_container_site_uv" style="display:none"><span class="post-meta-item-icon"><i class="fa fa-user"></i></span> <span class="site-uv" title="总访客量">访客数：<span id="busuanzi_value_site_uv"></span></span></span> <span class="post-meta-divider">|</span><span class="post-meta-item" id="busuanzi_container_site_pv" style="display:none"><span class="post-meta-item-icon"><i class="fa fa-eye"></i></span> <span class="site-pv" title="总访问量">阅读量：<span id="busuanzi_value_site_pv"></span></span></span></div></div></footer></div><script color="17,63,61" opacity="1" zindex="-1" count="199" src="/lib/canvas-nest/canvas-nest.min.js"></script><script src="/lib/anime.min.js"></script><script src="//cdn.jsdelivr.net/npm/jquery@3/dist/jquery.min.js"></script><script src="//cdn.jsdelivr.net/gh/fancyapps/fancybox@3/dist/jquery.fancybox.min.js"></script><script src="/lib/velocity/velocity.min.js"></script><script src="/lib/velocity/velocity.ui.min.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/pisces.js"></script><script src="/js/next-boot.js"></script><script src="/js/local-search.js"></script><script type="text/x-mathjax-config">
+
+  MathJax.Hub.Config({
+    tex2jax: {
+      inlineMath: [ ['$', '$'], ['\\(', '\\)'] ],
+      processEscapes: true,
+      skipTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+    },
+    TeX: {
+      equationNumbers: {
+        autoNumber: 'AMS'
+      }
+    }
+  });
+
+  MathJax.Hub.Register.StartupHook('TeX Jax Ready', function() {
+    MathJax.InputJax.TeX.prefilterHooks.Add(function(data) {
+      if (data.display) {
+        var next = data.script.nextSibling;
+        while (next && next.nodeName.toLowerCase() === '#text') {
+          next = next.nextSibling;
+        }
+        if (next && next.nodeName.toLowerCase() === 'br') {
+          next.parentNode.removeChild(next);
+        }
+      }
+    });
+  });
+
+  MathJax.Hub.Queue(function() {
+    var all = MathJax.Hub.getAllJax(), i;
+    for (i = 0; i < all.length; i += 1) {
+      element = document.getElementById(all[i].inputID + '-Frame').parentNode;
+      if (element.nodeName.toLowerCase() == 'li') {
+        element = element.parentNode;
+      }
+      element.classList.add('has-jax');
+    }
+  });
+</script><script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/mathjax@2/MathJax.js?config=TeX-AMS-MML_HTMLorMML', () => {
+    MathJax.Hub.Typeset();
+  }, window.MathJax);
+</script><link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.css"><script>
+  NexT.utils.getScript('//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js', () => {
+    var gitalk = new Gitalk({
+      clientID: '8f22595c6dd29c94467d',
+      clientSecret: 'e66bd90ebb9aa66c562c753dec6c90ceecbd51f2',
+      repo: 'guestbook',
+      owner: 'zjZSTU',
+      admin: ['zjZSTU'],
+      id: '544b77f8ccf12a78a784556abbf77339',
+        language: '',
+      distractionFreeMode: 'true'
+    });
+    gitalk.render('gitalk-container');
+  }, window.Gitalk);
+</script></body></html>
